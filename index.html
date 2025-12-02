@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Area RealState - César Giraldo Álvarez</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Montserrat', sans-serif; }
+    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); overflow: auto; }
+    .modal-content { background-color: white; margin: 5% auto; padding: 30px; border-radius: 20px; width: 95%; max-width: 1300px; }
+    .close { color: #aaa; float: right; font-size: 40px; font-weight: bold; cursor: pointer; }
+    #adminView, #addFormView { display: none; }
+    .galeria-preview img { width: 80px; height: 80px; object-fit: cover; margin: 5px; border-radius: 8px; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Navbar -->
+  <nav class="bg-gradient-to-r from-blue-950 to-blue-800 text-white p-4 fixed w-full top-0 z-50 shadow-2xl">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-4">
+        <img src="https://i.imgur.com/Ne3WCxz.png" alt="Logo" class="h-12"/>
+        <div>
+          <h1 class="text-2xl font-black">AREA REALSTATE</h1>
+          <p class="text-xs">César Giraldo Álvarez</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-6">
+        <button onclick="abrirAdmin()" class="bg-yellow-500 text-blue-900 px-6 py-3 rounded-full font-bold hover:bg-yellow-400">
+          <i class="fas fa-user-shield"></i> Admin
+        </button>
+        <a href="https://wa.me/573234274090" class="bg-green-600 px-6 py-3 rounded-full font-bold hover:bg-green-700 flex items-center gap-2">
+          <i class="fab fa-whatsapp"></i> WhatsApp
+        </a>
+      </div>
+    </div>
+  </nav>
+  <!-- Hero -->
+  <section class="bg-gradient-to-br from-blue-900 to-blue-700 text-white pt-24 pb-40 text-center">
+    <div class="max-w-5xl mx-auto px-6">
+      <h2 class="text-5xl md:text-7xl font-black mb-6">Tu propiedad ideal<br>en Colombia</h2>
+      <p class="text-2xl mb-10">Casas, apartamentos, fincas y lotes exclusivos</p>
+    </div>
+  </section>
+  <!-- FILTROS -->
+  <section class="max-w-7xl mx-auto px-6 -mt-20 relative z-40">
+    <div class="bg-white rounded-3xl shadow-2xl p-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <select id="filtroTipo" onchange="filtrar()" class="p-4 border-2 rounded-xl text-lg">
+          <option value="">Tipo de inmueble</option>
+          <option>Casa</option><option>Apartamento</option><option>Finca</option><option>Lote</option><option>Comercial</option>
+        </select>
+        <input type="text" id="filtroCiudad" onkeyup="filtrar()" placeholder="Ciudad" class="p-4 border-2 rounded-xl text-lg"/>
+        <input type="number" id="filtroPrecio" onkeyup="filtrar()" placeholder="Precio máximo (millones)" class="p-4 border-2 rounded-xl text-lg"/>
+        <button onclick="limpiarFiltros()" class="bg-red-600 text-white p-4 rounded-xl font-bold hover:bg-red-700">Limpiar</button>
+      </div>
+    </div>
+  </section>
+  <!-- Catálogo público -->
+  <section class="max-w-7xl mx-auto px-6 py-20">
+    <h2 class="text-5xl font-black text-center mb-16 text-gray-800">Propiedades Disponibles</h2>
+    <div id="lista" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
+  </section>
+  <!-- PANEL ADMIN -->
+  <div id="adminView" class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-start justify-center overflow-y-auto pt-10">
+    <div class="bg-white rounded-2xl w-11/12 max-w-7xl p-8 relative">
+      <button onclick="cerrarAdmin()" class="absolute top-4 right-6 text-4xl text-red-600">&times;</button>
+      <h2 class="text-4xl font-black text-center mb-8">Panel Administrativo - César Giraldo</h2>
+      <button onclick="mostrarAgregar()" class="mb-8 bg-green-600 text-white px-8 py-4 rounded-xl font-bold text-xl hover:bg-green-700">
+        <i class="fas fa-plus"></i> Agregar Nueva Propiedad
+      </button>
+      <div id="adminLista" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+    </div>
+  </div>
+  <!-- Formulario agregar/editar -->
+  <div id="addFormView" class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-start justify-center overflow-y-auto pt-10">
+    <div class="bg-white rounded-2xl w-11/12 max-w-4xl p-10 relative">
+      <button onclick="volverAdmin()" class="absolute top-4 right-6 text-3xl text-gray-600">←</button>
+      <h2 class="text-3xl font-black mb-8" id="formTitle">Agregar Nueva Propiedad</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <input type="text" id="formTitulo" placeholder="Título" class="p-4 border rounded-xl text-lg"/>
+        <input type="text" id="formPrecio" placeholder="Precio (ej: 850.000.000)" class="p-4 border rounded-xl text-lg"/>
+        <input type="text" id="formCiudad" placeholder="Ciudad" class="p-4 border rounded-xl text-lg"/>
+        <select id="formTipo" class="p-4 border rounded-xl text-lg">
+          <option value="">Tipo</option>
+          <option>Casa</option><option>Apartamento</option><option>Finca</option><option>Lote</option><option>Comercial</option>
+        </select>
+        <input type="text" id="formArea" placeholder="Área (ej: 180 m²)" class="p-4 border rounded-xl"/>
+        <input type="text" id="formHab" placeholder="Habitaciones" class="p-4 border rounded-xl"/>
+        <input type="text" id="formBanos" placeholder="Baños" class="p-4 border rounded-xl"/>
+        <input type="text" id="formGaraje" placeholder="Garajes" class="p-4 border rounded-xl"/>
+        <input type="url" id="formPortada" placeholder="URL Foto Portada (Imgur)" class="p-4 border rounded-xl col-span-2"/>
+        <textarea id="formDesc" placeholder="Descripción completa" class="p-4 border rounded-xl col-span-2" rows="4"></textarea>
+        <div class="col-span-2">
+          <p class="font-bold mb-2">Galería adicional (hasta 10 fotos):</p>
+          <div id="galeriaInputs"></div>
+          <button type="button" onclick="agregarCampoFoto()" class="mt-2 text-blue-600 hover:underline">+ Agregar otra foto</button>
+          <div id="previewGaleria" class="galeria-preview mt-4"></div>
+        </div>
+        <input type="url" id="formMapa" placeholder="Link Google Maps embebido (opcional)" class="p-4 border rounded-xl col-span-2"/>
+      </div>
+      <div class="mt-8 flex gap-4 justify-center">
+        <button onclick="guardarPropiedad()" class="bg-green-600 text-white px-12 py-5 rounded-xl font-bold text-xl hover:bg-green-700">Guardar</button>
+        <button onclick="volverAdmin()" class="bg-gray-600 text-white px-12 py-5 rounded-xl font-bold text-xl hover:bg-gray-700">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  <!-- Modales público -->
+  <div id="modales"></div>
+
+  <script>
+    const PASSWORD = "cesar2025";
+    let propiedades = [];
+    let editandoId = null;
+
+    // CARGAR DESDE data.json (el archivo que vas a subir a Netlify)
+    async function cargarPropiedades() {
+      try {
+        const res = await fetch("data.json?t=" + Date.now());
+        propiedades = await res.json();
+      } catch {
+        // Si no existe data.json aún → usa las 20 iniciales
+        propiedades = [
+          {id:1,titulo:"Edificio Comercial Alfonso López",precio:"1.380.000.000",ubicacion:"Barranquilla",tipo:"Comercial",area:"—",hab:"—",banos:"—",garaje:"—",portada:"https://i.imgur.com/TRzq3cm.jpg",descripcion:"Edificio comercial de 3 niveles listo para negocio",galeria:[],mapa:""},
+          {id:2,titulo:"Consultorios Médicos Clínica",precio:"493.000.000 - 570.000.000",ubicacion:"Pereira",tipo:"Comercial",area:"57 m²",hab:"—",banos:"—",garaje:"Sí",portada:"https://i.imgur.com/fLASQrX.jpg",descripcion:"Para estrenar",galeria:[],mapa:""},
+          {id:3,titulo:"Apartamento Wind Tower",precio:"950.000.000",ubicacion:"Cartagena",tipo:"Apartamento",area:"135 m²",hab:"—",banos:"—",garaje:"—",portada:"https://i.imgur.com/p2dV5iX.jpg",descripcion:"Amoblado frente al mar",galeria:[],mapa:""},
+          {id:4,titulo:"Finca Cítricos Belén",precio:"55.000.000 por CDS",ubicacion:"Belén de Umbría",tipo:"Finca",area:"40.3 CDS",hab:"—",banos:"—",garaje:"—",portada:"https://i.imgur.com/PM9nIso.jpg",descripcion:"Productiva de cítricos",galeria:[],mapa:""},
+          {id:5,titulo:"Casa Malabar Lote 7.500 m²",precio:"5.500.000.000",ubicacion:"Malabar",tipo:"Casa",area:"2.000 m²",hab:"—",banos:"—",garaje:"—",portada:"https://i.imgur.com/lWCZziX.jpg",descripcion:"Con piscina y cancha de tenis",galeria:[],mapa:""},
+          {id:6,titulo:"Apartamento Alamos 134 m²",precio:"650.000.000",ubicacion:"Cali",tipo:"Apartamento",area:"134 m²",hab:"3",banos:"3",garaje:"1",portada:"https://i.imgur.com/kkGv9at.jpg",descripcion:"",galeria:[],mapa:""},
+          {id:7,titulo:"Casa Cerritos 10.000 m²",precio:"2.200.000.000",ubicacion:"Cerritos",tipo:"Casa",area:"420 m²",hab:"4",banos:"4",garaje:"2",portada:"https://i.imgur.com/IXuVZbu.jpg",descripcion:"Piscina infinita",galeria:[],mapa:""},
+          {id:8,titulo:"Casa Combia 280 m²",precio:"1.050.000.000",ubicacion:"Combia",tipo:"Casa",area:"280 m²",hab:"4",banos:"4",garaje:"2",portada:"https://i.imgur.com/jvJXk9r.jpg",descripcion:"Campestre",galeria:[],mapa:""},
+          {id:9,titulo:"Casa Pinares La Cielo",precio:"1.100.000.000",ubicacion:"Cali",tipo:"Casa",area:"216 m²",hab:"3",banos:"3",garaje:"2",portada:"https://i.imgur.com/O0tVZ6h.jpg",descripcion:"Conjunto cerrado",galeria:[],mapa:""},
+          {id:10,titulo:"Casa Av Sur 4 Alcobas",precio:"600.000.000",ubicacion:"Cali",tipo:"Casa",area:"150 m²",hab:"4",banos:"4",garaje:"1",portada:"https://i.imgur.com/TzEIHiu.jpg",descripcion:"Familiar",galeria:[],mapa:""},
+          {id:11,titulo:"Casa Alamos 235 m²",precio:"840.000.000",ubicacion:"Cali",tipo:"Casa",area:"235 m²",hab:"3",banos:"3",garaje:"2",portada:"https://i.imgur.com/rWjEZiP.jpg",descripcion:"",galeria:[],mapa:""},
+          {id:12,titulo:"Apto Av Sur 59 m²",precio:"390.000.000",ubicacion:"Cali",tipo:"Apartamento",area:"59 m²",hab:"2",banos:"2",garaje:"1",portada:"https://i.imgur.com/R3PVG7n.jpg",descripcion:"",galeria:[],mapa:""},
+          {id:13,titulo:"Casa Via Armenia",precio:"1.100.000.000",ubicacion:"Quindío",tipo:"Casa",area:"225 m²",hab:"3",banos:"3",garaje:"2",portada:"https://i.imgur.com/w5Nb0WD.jpg",descripcion:"Campestre",galeria:[],mapa:""},
+          {id:14,titulo:"Apto Dos Parqueos",precio:"310.000.000",ubicacion:"Cali",tipo:"Apartamento",area:"70 m²",hab:"2",banos:"2",garaje:"2",portada:"https://i.imgur.com/9eMwdke.jpg",descripcion:"Piso 12",galeria:[],mapa:""},
+          {id:15,titulo:"Apto Av Sur 96 m²",precio:"400.000.000",ubicacion:"Cali",tipo:"Apartamento",area:"96 m²",hab:"2",banos:"2",garaje:"1",portada:"https://i.imgur.com/fUQOLQP.jpg",descripcion:"Remodelado",galeria:[],mapa:""},
+          {id:16,titulo:"Apto Av Sur 68 m²",precio:"390.000.000",ubicacion:"Cali",tipo:"Apartamento",area:"68 m²",hab:"2",banos:"2",garaje:"1",portada:"https://i.imgur.com/6Z6k0Gm.jpg",descripcion:"",galeria:[],mapa:""},
+          {id:17,titulo:"Apto Pinares 127 m²",precio:"600.000.000",ubicacion:"Cali",tipo:"Apartamento",area:"127 m²",hab:"2",banos:"3",garaje:"1",portada:"https://i.imgur.com/piPA1Ta.jpg",descripcion:"",galeria:[],mapa:""},
+          {id:18,titulo:"Apto Av Sur 1er Piso",precio:"360.000.000",ubicacion:"Cali",tipo:"Apartamento",area:"96 m²",hab:"2",banos:"2",garaje:"1",portada:"https://i.imgur.com/isMGG5C.jpg",descripcion:"Jardín privado",galeria:[],mapa:""},
+          {id:19,titulo:"Casa Galicia",precio:"450.000.000",ubicacion:"Cali",tipo:"Casa",area:"150 m²",hab:"3",banos:"3",garaje:"2",portada:"https://i.imgur.com/veUbUYv.jpg",descripcion:"Conjunto cerrado",galeria:[],mapa:""},
+          {id:20,titulo:"Apto Pinares 131 m²",precio:"550.000.000",ubicacion:"Cali",tipo:"Apartamento",area:"131 m²",hab:"3",banos:"2",garaje:"1",portada:"https://i.imgur.com/kuAaw21.jpg",descripcion:"Luminoso",galeria:[],mapa:""}
+        ];
+      }
+      renderPublico();
+      if (document.getElementById('adminView')?.style.display === 'block') renderAdmin();
+    }
+
+    function guardarPropiedad() {
+      const galeria = Array.from(document.querySelectorAll('#galeriaInputs input')).map(i => i.value).filter(Boolean);
+      const nueva = {
+        id: editandoId || Date.now(),
+        titulo: document.getElementById('formTitulo').value || "Sin título",
+        precio: document.getElementById('formPrecio').value || "Consultar",
+        ubicacion: document.getElementById('formCiudad').value || "Colombia",
+        tipo: document.getElementById('formTipo').value || "Casa",
+        area: document.getElementById('formArea').value || "—",
+        hab: document.getElementById('formHab').value || "—",
+        banos: document.getElementById('formBanos').value || "—",
+        garaje: document.getElementById('formGaraje').value || "—",
+        portada: document.getElementById('formPortada').value || "https://via.placeholder.com/800x600.png?text=Sin+Foto",
+        descripcion: document.getElementById('formDesc').value,
+        galeria: galeria,
+        mapa: document.getElementById('formMapa').value || ""
+      };
+
+      if (editandoId) {
+        propiedades = propiedades.map(p => p.id === editandoId ? nueva : p);
+      } else {
+        propiedades.push(nueva);
+      }
+
+      // DESCARGA AUTOMÁTICA del data.json actualizado
+      const dataStr = JSON.stringify(propiedades, null, 2);
+      const blob = new Blob([dataStr], {type: "application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "data.json";
+      a.click();
+
+      alert("¡PROPIEDAD GUARDADA!\n\nSe descargó el archivo data.json\n→ Arrástralo a Netlify (Site files)\nEn 15 segundos TODOS la verán en la página");
+      volverAdmin();
+    }
+
+    // === TODO EL RESTO DEL CÓDIGO QUEDA 100% IGUAL (renderPublico, modales, admin, etc.) ===
+    function renderPublico() {
+      const lista = document.getElementById('lista');
+      const modales = document.getElementById('modales');
+      lista.innerHTML = ''; modales.innerHTML = '';
+      propiedades.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-2xl shadow-xl overflow-hidden hover:scale-105 transition duration-300';
+        card.dataset.tipo = p.tipo || '';
+        card.dataset.ciudad = (p.ubicacion || '').toLowerCase();
+        card.dataset.precio = parseInt(p.precio.replace(/\D/g,'')) || 0;
+        card.innerHTML = `
+          <img src="${p.portada}" class="w-full h-72 object-cover"/>
+          <div class="p-8">
+            <h3 class="text-2xl font-bold text-blue-900 mb-2">${p.titulo}</h3>
+            <p class="text-4xl font-black text-green-600 mb-3">$${p.precio}</p>
+            <p class="text-gray-700 mb-4"><i class="fas fa-map-marker-alt text-red-600"></i> ${p.ubicacion}</p>
+            <div class="grid grid-cols-3 gap-4 text-center text-gray-600 text-sm">
+              <div><i class="fas fa-ruler-combined"></i><br>${p.area || '—'}</div>
+              <div><i class="fas fa-bed"></i><br>${p.hab || '—'}</div>
+              <div><i class="fas fa-bath"></i><br>${p.banos || '—'}</div>
+            </div>
+            <button onclick="openModal(${p.id})" class="w-full mt-6 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700">Ver Detalles</button>
+            <a href="https://wa.me/573234274090?text=Hola César, me interesa: ${encodeURIComponent(p.titulo)}" class="block text-center mt-3 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700">
+              <i class="fab fa-whatsapp"></i> Contactar
+            </a>
+          </div>`;
+        lista.appendChild(card);
+
+        const modal = document.createElement('div');
+        modal.id = 'modal-'+p.id;
+        modal.className = 'modal';
+        modal.innerHTML = `
+          <div class="modal-content relative">
+            <span class="close" onclick="closeModal(${p.id})">&times;</span>
+            <h2 class="text-4xl font-black text-blue-900 mb-6">${p.titulo}</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <img src="${p.portada}" class="w-full h-96 object-cover rounded-xl mb-4"/>
+                ${p.galeria.length > 0 ? '<div class="grid grid-cols-4 gap-2">'+p.galeria.map(img=>`<img src="${img}" class="rounded cursor-pointer hover:opacity-80" onclick="this.closest(\'.modal-content\').querySelector(\'img:first-of-type\').src=this.src">`).join('')+'</div>' : ''}
+              </div>
+              <div>
+                <p class="text-4xl font-black text-green-600 mb-4">$${p.precio}</p>
+                <p class="text-xl mb-6"><i class="fas fa-map-marker-alt text-red-600"></i> ${p.ubicacion} • ${p.tipo}</p>
+                <p class="mb-6 text-gray-700 leading-relaxed">${p.descripcion || 'Sin descripción adicional'}</p>
+                ${p.mapa ? `<iframe src="${p.mapa}" width="100%" height="350" class="rounded-xl border-0 w-full shadow-lg" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>` : '<p class="text-gray-500 italic text-center py-8">Mapa no disponible aún</p>'}
+                <a href="https://wa.me/573234274090?text=Hola César, quiero más info de: ${encodeURIComponent(p.titulo)}" class="block mt-8 text-center bg-green-600 text-white py-4 rounded-xl font-bold text-xl hover:bg-green-700 shadow-lg">
+                  <i class="fab fa-whatsapp"></i> Contactar por WhatsApp
+                </a>
+              </div>
+            </div>
+          </div>`;
+        modales.appendChild(modal);
+      });
+    }
+
+    function openModal(id) { document.getElementById('modal-'+id).style.display = 'block'; }
+    function closeModal(id) { document.getElementById('modal-'+id).style.display = 'none'; }
+    window.onclick = e => { if (e.target.classList.contains('modal')) e.target.style.display = 'none'; };
+
+    function abrirAdmin() {
+      const pass = prompt("Contraseña de administrador:");
+      if (pass === PASSWORD) {
+        document.getElementById('adminView').style.display = 'block';
+        renderAdmin();
+      } else if (pass !== null) alert("Contraseña incorrecta");
+    }
+    function cerrarAdmin() { document.getElementById('adminView').style.display = 'none'; }
+    function volverAdmin() { document.getElementById('addFormView').style.display = 'none'; document.getElementById('adminView').style.display = 'block'; renderAdmin(); }
+
+    function renderAdmin() {
+      const lista = document.getElementById('adminLista');
+      lista.innerHTML = '';
+      propiedades.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'bg-gray-50 rounded-xl p-6 shadow-lg relative';
+        card.innerHTML = `
+          <img src="${p.portada}" class="w-full h-48 object-cover rounded-lg mb-4"/>
+          <h3 class="font-bold text-xl">${p.titulo}</h3>
+          <p class="text-green-600 font-black text-2xl">$${p.precio}</p>
+          <p class="text-gray-600">${p.ubicacion} • ${p.tipo}</p>
+          <div class="mt-4 flex gap-3">
+            <button onclick="editarPropiedad(${p.id})" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Editar</button>
+            <button onclick="eliminarPropiedad(${p.id})" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Eliminar</button>
+          </div>`;
+        lista.appendChild(card);
+      });
+    }
+
+    function mostrarAgregar() {
+      editandoId = null;
+      document.getElementById('formTitle').textContent = "Agregar Nueva Propiedad";
+      limpiarFormulario();
+      document.getElementById('adminView').style.display = 'none';
+      document.getElementById('addFormView').style.display = 'block';
+      agregarCampoFoto();
+    }
+    function editarPropiedad(id) {
+      const p = propiedades.find(x => x.id === id);
+      editandoId = id;
+      document.getElementById('formTitle').textContent = "Editar Propiedad";
+      document.getElementById('formTitulo').value = p.titulo;
+      document.getElementById('formPrecio').value = p.precio;
+      document.getElementById('formCiudad').value = p.ubicacion;
+      document.getElementById('formTipo').value = p.tipo;
+      document.getElementById('formArea').value = p.area || '';
+      document.getElementById('formHab').value = p.hab || '';
+      document.getElementById('formBanos').value = p.banos || '';
+      document.getElementById('formGaraje').value = p.garaje || '';
+      document.getElementById('formPortada').value = p.portada;
+      document.getElementById('formDesc').value = p.descripcion || '';
+      document.getElementById('formMapa').value = p.mapa || '';
+      const galeriaInputs = document.getElementById('galeriaInputs');
+      galeriaInputs.innerHTML = '';
+      (p.galeria || []).forEach(url => agregarCampoFoto(url));
+      document.getElementById('adminView').style.display = 'none';
+      document.getElementById('addFormView').style.display = 'block';
+    }
+    function eliminarPropiedad(id) {
+      if (confirm("¿Seguro que deseas eliminar esta propiedad?")) {
+        propiedades = propiedades.filter(p => p.id !== id);
+        const dataStr = JSON.stringify(propiedades, null, 2);
+        const blob = new Blob([dataStr], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "data.json";
+        a.click();
+        alert("Propiedad eliminada → Descarga data.json y súbelo a Netlify");
+        renderAdmin();
+        renderPublico();
+      }
+    }
+    function agregarCampoFoto(valor = '') {
+      const div = document.getElementById('galeriaInputs');
+      const input = document.createElement('input');
+      input.type = 'url';
+      input.placeholder = 'URL foto adicional (Imgur)';
+      input.className = 'p-3 border rounded-lg w-full mt-2';
+      input.value = valor;
+      input.oninput = previewGaleria;
+      div.appendChild(input);
+    }
+    function previewGaleria() {
+      const urls = Array.from(document.querySelectorAll('#galeriaInputs input')).map(i => i.value).filter(Boolean);
+      const preview = document.getElementById('previewGaleria');
+      preview.innerHTML = urls.map(u => `<img src="${u}" onerror="this.style.display='none'">`).join('');
+    }
+    function filtrar() {
+      const tipo = document.getElementById('filtroTipo').value.toLowerCase();
+      const ciudad = document.getElementById('filtroCiudad').value.toLowerCase();
+      const precio = document.getElementById('filtroPrecio').value;
+      document.querySelectorAll('#lista > div').forEach(card => {
+        const matchTipo = !tipo || card.dataset.tipo.toLowerCase().includes(tipo);
+        const matchCiudad = !ciudad || card.dataset.ciudad.includes(ciudad);
+        const matchPrecio = !precio || card.dataset.precio <= precio * 1000000;
+        card.style.display = (matchTipo && matchCiudad && matchPrecio) ? '' : 'none';
+      });
+    }
+    function limpiarFiltros() {
+      document.getElementById('filtroTipo').value = '';
+      document.getElementById('filtroCiudad').value = '';
+      document.getElementById('filtroPrecio').value = '';
+      filtrar();
+    }
+    function limpiarFormulario() {
+      document.querySelectorAll('#addFormView input, #addFormView textarea, #addFormView select').forEach(el => el.value = '');
+      document.getElementById('galeriaInputs').innerHTML = '';
+      document.getElementById('previewGaleria').innerHTML = '';
+    }
+
+    // INICIAR
+    cargarPropiedades();
+  </script>
+</body>
+</html>
