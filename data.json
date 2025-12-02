@@ -30,21 +30,6 @@
     "mapa": ""
   },
   {
-    "id": 3,
-    "titulo": "Apartamento Wind Tower",
-    "precio": "950.000.000",
-    "ubicacion": "Cartagena",
-    "tipo": "Apartamento",
-    "area": "135 m²",
-    "hab": "3",
-    "banos": "3",
-    "garaje": "2",
-    "portada": "https://i.imgur.com/p2dV5iX.jpg",
-    "descripcion": "Amoblado frente al mar",
-    "galeria": [],
-    "mapa": ""
-  },
-  {
     "id": 4,
     "titulo": "Finca Cítricos Belén",
     "precio": "55.000.000 por CDS",
